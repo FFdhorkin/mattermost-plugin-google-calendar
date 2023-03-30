@@ -10,7 +10,7 @@ A google calendar plugin for Mattermost client which allows you to create, delet
 ## Features
 - Create events
 - Delete Events
-- Get 10 minute notifications
+- Get 1 minute notifications
 - Get event updates
 - Status is set to Do Not Disturb when in a event (Manually required to reset it)
 - Get invitations request within Mattermost and reply to them instantly
@@ -63,7 +63,7 @@ If you are interested in contributing, please fork this repo and create a pull r
 - Change response to event within mattermost
 - Show conflicts when invited to event with other events on your calendar
 - Better error logging / handling
-- Optimizations in cron jobs for reminding users about 10 minutes until event as well as user in event
+- Optimizations in cron jobs for reminding users about 1 minutes until event as well as user in event
 - Code refactoring
 - More commenting throughout code to explain what's going on
 - Set the calendar user wants to sync with (Currently it uses primary calendar)

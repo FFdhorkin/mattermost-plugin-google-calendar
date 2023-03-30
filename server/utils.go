@@ -315,11 +315,11 @@ func (p *Plugin) remindUser(userID string) {
 		self := p.retrieveMyselfForEvent(event)
 		iAmAttendingEvent := (p.iAmAttendingEvent(self) || event.Creator.Self)
 		if !p.eventIsDeleted(event) && iAmAttendingEvent {
-			t := time.Now().In(userLocation).Add(10 * time.Minute)
+			t := time.Now().In(userLocation).Add(1 * time.Minute)
 			tenMinutesLater := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), 0, 0, userLocation).Format(time.RFC3339)
 			if tenMinutesLater == event.Start.DateTime {
 				eventFormatted := p.printEventSummary(userID, event)
-				p.CreateBotDMPost(userID, fmt.Sprintf("**_10 minutes until this event:_**\n\n%s", eventFormatted))
+				p.CreateBotDMPost(userID, fmt.Sprintf("**_1 minute until this event:_**\n\n%s", eventFormatted))
 			}
 		}
 	}
