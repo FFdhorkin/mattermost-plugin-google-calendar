@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin"
+	"github.com/mattermost/mattermost-server/v6/model"
+	"github.com/mattermost/mattermost-server/v6/plugin"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/calendar/v3"
 )
