@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/robfig/cron/v3"
 
 	"github.com/mattermost/mattermost-server/v5/mlog"
 	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost-server/v5/plugin"
+	"github.com/mattermost/mattermost-plugin-api/cluster"
+	
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
@@ -257,13 +259,27 @@ func (p *Plugin) getPrimaryCalendarLocation(userID string) *time.Location {
 	return location
 }
 
-func (p *Plugin) startCronJob(userID string) {
-	cron := cron.New()
-	cron.AddFunc("@every 1m", func() {
+func (p *Plugin) scheduleJob(userID string) {
+	// cron := cron.New()
+	// cron.AddFunc("@every 1m", func() {
+	// 	p.remindUser(userID)
+	// 	p.userInEvent(userID)
+	// })
+	// cron.Start()
+
+	pluginAPI := plugin.API(nil)
+
+	callback := func() {
+		// periodic work to do
 		p.remindUser(userID)
 		p.userInEvent(userID)
-	})
-	cron.Start()
+	}
+
+	// job, err
+	_, err := cluster.Schedule(pluginAPI, "key", cluster.MakeWaitForInterval(1*time.Minute), callback)
+	if err != nil {
+		panic("failed to schedule job")
+	}
 }
 
 func (p *Plugin) setupCalendarWatch(userID string) error {

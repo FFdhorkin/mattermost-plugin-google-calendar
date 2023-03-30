@@ -128,7 +128,7 @@ func (p *Plugin) completeCalendar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p.startCronJob(autheduserId)
+	p.scheduleJob(autheduserId)
 
 	// Post intro post
 	message := "#### Welcome to the Mattermost Google Calendar Plugin!\n" +
