@@ -9,13 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
-	"github.com/mattermost/mattermost-server/v6/shared/mlog"
+	"github.com/mattermost/mattermost-plugin-api/cluster"
 	"github.com/mattermost/mattermost-server/v6/model"
 	"github.com/mattermost/mattermost-server/v6/plugin"
-	"github.com/mattermost/mattermost-plugin-api/cluster"
-	
+	"github.com/mattermost/mattermost-server/v6/shared/mlog"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
@@ -23,12 +21,19 @@ import (
 )
 
 // CreateBotDMPost used to post as google calendar bot to the user directly
-func (p *Plugin) CreateBotDMPost(userID, message string) *model.AppError {
-	channel, err := p.API.GetDirectChannel(userID, p.botID)
+func (p *Plugin) CreateBotDMPost(userID, message string) error {
+
+	mlog.Debug("Got to AA " + userID + " " + p.botID)
+	// channel, err := p.API.GetDirectChannel(userID, p.botID)
+	channel, err := p.client.Channel.GetDirect(userID, p.botID)
+
+	mlog.Debug("Got to AB")
 	if err != nil {
 		mlog.Error("Couldn't get bot's DM channel", mlog.String("user_id", userID))
 		return err
 	}
+
+	mlog.Debug("Got to AC")
 
 	post := &model.Post{
 		UserId:    p.botID,
@@ -36,10 +41,14 @@ func (p *Plugin) CreateBotDMPost(userID, message string) *model.AppError {
 		Message:   message,
 	}
 
+	mlog.Debug("Got to AD")
+
 	if _, err := p.API.CreatePost(post); err != nil {
 		mlog.Error(err.Error())
 		return err
 	}
+
+	mlog.Debug("Got to AE")
 
 	return nil
 }
@@ -260,14 +269,12 @@ func (p *Plugin) getPrimaryCalendarLocation(userID string) *time.Location {
 }
 
 func (p *Plugin) scheduleJob(userID string) {
-	// cron := cron.New()
-	// cron.AddFunc("@every 1m", func() {
-	// 	p.remindUser(userID)
-	// 	p.userInEvent(userID)
-	// })
-	// cron.Start()
+
+	mlog.Debug("Got to BA")
 
 	pluginAPI := plugin.API(nil)
+
+	mlog.Debug("Got to BB")
 
 	callback := func() {
 		// periodic work to do
@@ -275,31 +282,61 @@ func (p *Plugin) scheduleJob(userID string) {
 		p.userInEvent(userID)
 	}
 
+	mlog.Debug("Got to BC")
+
 	// job, err
 	_, err := cluster.Schedule(pluginAPI, "key", cluster.MakeWaitForInterval(1*time.Minute), callback)
+
+	mlog.Debug("Got to BD")
 	if err != nil {
 		panic("failed to schedule job")
 	}
+
+	mlog.Debug("Got to BE")
 }
 
 func (p *Plugin) setupCalendarWatch(userID string) error {
+	mlog.Debug("Got to CA")
 	srv, _ := p.getCalendarService(userID)
+	mlog.Debug("Got to CB")
 	config := p.API.GetConfig()
-	uuid := uuid.New().String()
+	mlog.Debug("Got to CC")
+	uuid := model.NewId()
+	mlog.Debug("Got to CD")
 	webSocketURL := *config.ServiceSettings.SiteURL
+	mlog.Debug("Got to CE")
 	channel, err := srv.Events.Watch("primary", &calendar.Channel{
 		Address: fmt.Sprintf("%s/plugins/%s/watch?userId=%s", webSocketURL, manifest.ID, userID),
 		Id:      uuid,
 		Type:    "web_hook",
+		Token:   model.NewId(),
 	}).Do()
+	mlog.Debug("Got to CF")
 
 	if err != nil {
 		return err
 	}
 
-	watchChannelJSON, _ := channel.MarshalJSON()
+	mlog.Debug("Got to CG")
+
+	watchChannelJSON, err := channel.MarshalJSON()
+	if err != nil {
+		mlog.Debug("watchChannelJSON err: " + err.Error())
+	}
+	mlog.Debug("Got to CH")
 	p.API.KVSet(userID+"watchToken", []byte(uuid))
-	p.API.KVSet(userID+"watchChannel", watchChannelJSON)
+	mlog.Debug("Got to CI " + userID + "watchChannel" + " " + string(watchChannelJSON))
+	mlog.Debug("watchChannelJSON: " + string(watchChannelJSON))
+	// result, err2 := p.client.KV.Set(userID+"watchChannel", watchChannelJSON)
+	err2 := p.API.KVSet(userID+"watchChannel", watchChannelJSON)
+	if err2 != nil {
+		// if err2 != nil || !result {
+		mlog.Debug("KVSet err2: " + err2.Error())
+		return err2
+	} else {
+		mlog.Debug("err2 is nil")
+	}
+	mlog.Debug("Got to CJ")
 	return nil
 }
 
